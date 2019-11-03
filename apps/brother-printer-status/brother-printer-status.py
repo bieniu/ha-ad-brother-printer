@@ -150,7 +150,7 @@ class BrotherPrinterStatus(hass.Hass):
             except TypeError:
                 return
             if toner:
-                sensor = "toner_" + color
+                sensor = "toner-" + color
                 entity = self.SENSOR_PREFIX.format(sensor)
                 if self.use_mqtt:
                     topic = self.TOPIC.format(sensor)
