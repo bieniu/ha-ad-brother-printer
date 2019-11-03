@@ -1,11 +1,11 @@
 """
-Adds four sensors to HA with data from Brother network printer WWW interface.
-Tested only with Brother HL-L2340DW.
+Adds seven sensors (five with an inkjet color printer) to HA with data from Brother network printer WWW interface.
+Tested only with Brother MFC-J5320DW.
 Arguments:
- - host					- hostname or IP address of the printer (required)
- - status_interval		- interval scanning for status page, default 10 sec.,
+ - host                    - hostname or IP address of the printer (required)
+ - status_interval        - interval scanning for status page, default 10 sec.,
                           status and toner sensors (optional)
- - info_interval		- interval scanning for information page, default 300
+ - info_interval        - interval scanning for information page, default 300
                           sec., printer counter and drum usage sensors
                           (optional)
  - use_mqtt             - use mqtt or add entities by AppDaemon (optional),
@@ -125,40 +125,52 @@ class BrotherPrinterStatus(hass.Hass):
                             "icon": "mdi:printer",
                         }
                         self.set_state(entity, state=status, attributes=attributes)
-            regex_res = self.regex(r"class=\"tonerremain\" height=\"(\d+)\"", page)
-            if regex_res:
-                try:
-                    toner = round(int(regex_res) / self.MAX_IMAGE_HEIGHT * 100)
-                except TypeError:
-                    return
-                if toner:
-                    sensor = "toner"
-                    entity = self.SENSOR_PREFIX.format(sensor)
-                    if self.use_mqtt:
-                        topic = self.TOPIC.format(sensor)
-                        model = self.printer_model(page)
-                        payload = {
-                            "name": "Printer " + sensor,
-                            "uniq_id": self.mac_simple + "-" + sensor,
-                            "dev": {
-                                "ids": self.mac_simple,
-                                "cns": [["mac", self.mac]],
-                                "mf": self.MANUFACTURER,
-                                "mdl": model,
-                                "name": self.MANUFACTURER + " " + model,
-                            },
-                            "ic": "mdi:flask-outline",
-                            "unit_of_meas": "%",
-                            "stat_t": topic + "state",
-                        }
-                        self.mqtt_publish(topic, payload, entity, sensor, toner)
-                    else:
-                        attributes = {
-                            "friendly_name": "Printer " + sensor,
-                            "icon": "mdi:flask-outline",
-                            "unit_of_measurement": "%",
-                        }
-                        self.set_state(entity, state=toner, attributes=attributes)
+                        
+            regex_res_magenta = self.regex(r"alt=\"Magenta\" class=\"tonerremain\" height=\"(\d+)\"", page)
+            regex_res_cyan = self.regex(r"alt=\"Cyan\" class=\"tonerremain\" height=\"(\d+)\"", page)
+            regex_res_yellow = self.regex(r"alt=\"Yellow\" class=\"tonerremain\" height=\"(\d+)\"", page)
+            regex_res_black = self.regex(r"alt=\"Black\" class=\"tonerremain\" height=\"(\d+)\"", page)
+            
+            self.set_toner_status(page, regex_res_magenta, "magenta")
+            self.set_toner_status(page, regex_res_cyan, "cyan")
+            self.set_toner_status(page, regex_res_yellow, "yellow")
+            self.set_toner_status(page, regex_res_black, "black")
+            
+    def set_toner_status(self, page, value, color):
+        if value:
+            try:
+                toner = round(int(value) / self.MAX_IMAGE_HEIGHT * 100)
+            except TypeError:
+                return
+            if toner:
+                sensor = "toner_" + color
+                entity = self.SENSOR_PREFIX.format(sensor)
+                if self.use_mqtt:
+                    topic = self.TOPIC.format(sensor)
+                    model = self.printer_model(page)
+                    payload = {
+                        "name": "Printer " + sensor,
+                        "uniq_id": self.mac_simple + "-" + sensor,
+                        "dev": {
+                            "ids": self.mac_simple,
+                            "cns": [["mac", self.mac]],
+                            "mf": self.MANUFACTURER,
+                            "mdl": model,
+                            "name": self.MANUFACTURER + " " + model,
+                        },
+                        "ic": "mdi:flask-outline",
+                        "unit_of_meas": "%",
+                        "stat_t": topic + "state",
+                    }
+                    self.mqtt_publish(topic, payload, entity, sensor, toner)
+                else:
+                    attributes = {
+                        "friendly_name": "Printer " + sensor,
+                        "icon": "mdi:flask-outline",
+                        "unit_of_measurement": "%",
+                    }
+                    self.set_state(entity, state=toner, attributes=attributes)
+            
 
     def update_printer_info_page(self, kwargs):
         page = self.download_page("http://{}{}".format(self.host, self.INFO_URL))
