@@ -27,11 +27,13 @@ brother_printer_status:
   retain: true
 """
 
-import appdaemon.plugins.hass.hassapi as hass
-import requests
-from datetime import datetime
-import re
 import json
+import re
+from datetime import datetime
+
+import requests
+
+import appdaemon.plugins.hass.hassapi as hass
 
 
 class BrotherPrinterStatus(hass.Hass):
