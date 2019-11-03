@@ -1,9 +1,9 @@
 """
-Adds seven sensors (five with an inkjet color printer) to HA with data from Brother network printer WWW interface.
-Tested only with Brother MFC-J5320DW.
+Adds sensors to HA with data from WWW interface of Brother network printer.
+Tested only with Brother HL-L2340DW and MFC-J5320DW.
 Arguments:
- - host                    - hostname or IP address of the printer (required)
- - status_interval        - interval scanning for status page, default 10 sec.,
+ - host                 - hostname or IP address of the printer (required)
+ - status_interval      - interval scanning for status page, default 10 sec.,
                           status and toner sensors (optional)
  - info_interval        - interval scanning for information page, default 300
                           sec., printer counter and drum usage sensors
@@ -36,8 +36,6 @@ import json
 
 class BrotherPrinterStatus(hass.Hass):
     def initialize(self):
-
-        __version__ = "0.3.2"
 
         # max value of the height of the black image on the printer's webpage
         self.MAX_IMAGE_HEIGHT = 56
@@ -125,17 +123,17 @@ class BrotherPrinterStatus(hass.Hass):
                             "icon": "mdi:printer",
                         }
                         self.set_state(entity, state=status, attributes=attributes)
-                        
+
             regex_res_magenta = self.regex(r"alt=\"Magenta\" class=\"tonerremain\" height=\"(\d+)\"", page)
             regex_res_cyan = self.regex(r"alt=\"Cyan\" class=\"tonerremain\" height=\"(\d+)\"", page)
             regex_res_yellow = self.regex(r"alt=\"Yellow\" class=\"tonerremain\" height=\"(\d+)\"", page)
             regex_res_black = self.regex(r"alt=\"Black\" class=\"tonerremain\" height=\"(\d+)\"", page)
-            
+
             self.set_toner_status(page, regex_res_magenta, "magenta")
             self.set_toner_status(page, regex_res_cyan, "cyan")
             self.set_toner_status(page, regex_res_yellow, "yellow")
             self.set_toner_status(page, regex_res_black, "black")
-            
+
     def set_toner_status(self, page, value, color):
         if value:
             try:
@@ -170,7 +168,7 @@ class BrotherPrinterStatus(hass.Hass):
                         "unit_of_measurement": "%",
                     }
                     self.set_state(entity, state=toner, attributes=attributes)
-            
+
 
     def update_printer_info_page(self, kwargs):
         page = self.download_page("http://{}{}".format(self.host, self.INFO_URL))
