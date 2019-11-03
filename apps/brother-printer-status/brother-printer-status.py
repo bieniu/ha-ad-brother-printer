@@ -26,7 +26,6 @@ brother_printer_status:
   mac: 00:11:22:33:44:55
   retain: true
 """
-
 import json
 import re
 from datetime import datetime
@@ -126,10 +125,18 @@ class BrotherPrinterStatus(hass.Hass):
                         }
                         self.set_state(entity, state=status, attributes=attributes)
 
-            regex_res_magenta = self.regex(r"alt=\"Magenta\" class=\"tonerremain\" height=\"(\d+)\"", page)
-            regex_res_cyan = self.regex(r"alt=\"Cyan\" class=\"tonerremain\" height=\"(\d+)\"", page)
-            regex_res_yellow = self.regex(r"alt=\"Yellow\" class=\"tonerremain\" height=\"(\d+)\"", page)
-            regex_res_black = self.regex(r"alt=\"Black\" class=\"tonerremain\" height=\"(\d+)\"", page)
+            regex_res_magenta = self.regex(
+                r"alt=\"Magenta\" class=\"tonerremain\" height=\"(\d+)\"", page
+            )
+            regex_res_cyan = self.regex(
+                r"alt=\"Cyan\" class=\"tonerremain\" height=\"(\d+)\"", page
+            )
+            regex_res_yellow = self.regex(
+                r"alt=\"Yellow\" class=\"tonerremain\" height=\"(\d+)\"", page
+            )
+            regex_res_black = self.regex(
+                r"alt=\"Black\" class=\"tonerremain\" height=\"(\d+)\"", page
+            )
 
             self.set_toner_status(page, regex_res_magenta, "magenta")
             self.set_toner_status(page, regex_res_cyan, "cyan")
@@ -170,7 +177,6 @@ class BrotherPrinterStatus(hass.Hass):
                         "unit_of_measurement": "%",
                     }
                     self.set_state(entity, state=toner, attributes=attributes)
-
 
     def update_printer_info_page(self, kwargs):
         page = self.download_page("http://{}{}".format(self.host, self.INFO_URL))
